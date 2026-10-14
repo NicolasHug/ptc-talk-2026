@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="560" fill="#ffffff"/>
+
+  <!-- ================= BEFORE ================= -->
+  <rect x="24" y="16" width="912" height="300" rx="12" fill="#fbfbfc" stroke="#e2e8f0"/>
+  <text x="56" y="44" font-size="18" font-weight="700" fill="#0f172a">Before</text>
+  <text x="56" y="64" font-size="13" fill="#64748b">Each library built its own decoding and encoding stack</text>
+
+  <!-- torchvision -->
+  <rect x="88" y="80" width="380" height="196" rx="10" fill="#ffffff" stroke="#cbd5e1"/>
+  <rect x="88" y="80" width="380" height="30" rx="10" fill="#f1f5f9"/>
+  <rect x="88" y="100" width="380" height="10" fill="#f1f5f9"/>
+  <text x="278" y="101" font-size="13.5" font-weight="700" fill="#0f172a" text-anchor="middle">torchvision</text>
+
+  <rect x="108" y="118" width="340" height="26" rx="6" fill="#fef3c7" stroke="#fcd34d"/>
+  <text x="278" y="136" font-size="12.5" fill="#92400e" text-anchor="middle">datasets</text>
+  <rect x="108" y="148" width="340" height="26" rx="6" fill="#dbeafe" stroke="#93c5fd"/>
+  <text x="278" y="166" font-size="12.5" fill="#1e40af" text-anchor="middle">video decode / encode</text>
+  <rect x="108" y="178" width="340" height="26" rx="6" fill="#dbeafe" stroke="#93c5fd"/>
+  <text x="278" y="196" font-size="12.5" fill="#1e40af" text-anchor="middle">image decode / encode</text>
+  <rect x="108" y="208" width="340" height="26" rx="6" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text x="278" y="226" font-size="12.5" fill="#334155" text-anchor="middle">transforms</text>
+  <rect x="108" y="238" width="340" height="26" rx="6" fill="#fef3c7" stroke="#fcd34d"/>
+  <text x="278" y="256" font-size="12.5" fill="#92400e" text-anchor="middle">models</text>
+
+  <!-- torchaudio -->
+  <rect x="492" y="80" width="380" height="196" rx="10" fill="#ffffff" stroke="#cbd5e1"/>
+  <rect x="492" y="80" width="380" height="30" rx="10" fill="#f1f5f9"/>
+  <rect x="492" y="100" width="380" height="10" fill="#f1f5f9"/>
+  <text x="682" y="101" font-size="13.5" font-weight="700" fill="#0f172a" text-anchor="middle">torchaudio</text>
+
+  <rect x="512" y="118" width="340" height="26" rx="6" fill="#fef3c7" stroke="#fcd34d"/>
+  <text x="682" y="136" font-size="12.5" fill="#92400e" text-anchor="middle">datasets / pipelines</text>
+  <rect x="512" y="148" width="340" height="26" rx="6" fill="#dbeafe" stroke="#93c5fd"/>
+  <text x="682" y="166" font-size="12.5" fill="#1e40af" text-anchor="middle">video decode / encode</text>
+  <rect x="512" y="178" width="340" height="26" rx="6" fill="#dbeafe" stroke="#93c5fd"/>
+  <text x="682" y="196" font-size="12.5" fill="#1e40af" text-anchor="middle">audio decode / encode</text>
+  <rect x="512" y="208" width="340" height="26" rx="6" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text x="682" y="226" font-size="12.5" fill="#334155" text-anchor="middle">transforms</text>
+  <rect x="512" y="238" width="340" height="26" rx="6" fill="#fef3c7" stroke="#fcd34d"/>
+  <text x="682" y="256" font-size="12.5" fill="#92400e" text-anchor="middle">models</text>
+
+  <!-- legend -->
+  <rect x="56" y="290" width="13" height="13" rx="3" fill="#dbeafe" stroke="#93c5fd"/>
+  <text x="78" y="301" font-size="12" fill="#475569">decoding / encoding: now actively developed in TorchCodec</text>
+  <rect x="440" y="290" width="13" height="13" rx="3" fill="#fef3c7" stroke="#fcd34d"/>
+  <text x="462" y="301" font-size="12" fill="#475569">now frozen &#8212; better served by the ecosystem</text>
+  <rect x="760" y="290" width="13" height="13" rx="3" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text x="782" y="301" font-size="12" fill="#475569">actively developed</text>
+
+  <!-- ================= NOW ================= -->
+  <rect x="24" y="330" width="912" height="214" rx="12" fill="#fbfbfc" stroke="#e2e8f0"/>
+  <text x="56" y="358" font-size="18" font-weight="700" fill="#0f172a">Now</text>
+  <text x="56" y="378" font-size="13" fill="#64748b">Decoding and encoding in TorchCodec, transforms in TorchVision and TorchAudio</text>
+
+  <!-- torchcodec: decoding -->
+  <rect x="56" y="396" width="190" height="100" rx="10" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="151" y="424" font-size="13.5" font-weight="700" fill="#0f172a" text-anchor="middle">torchcodec</text>
+  <text x="151" y="448" font-size="12.5" fill="#334155" text-anchor="middle">decoding</text>
+  <text x="151" y="472" font-size="11.5" fill="#64748b" text-anchor="middle">image &#183; video &#183; audio</text>
+
+  <path d="M 250 446 L 284 446" stroke="#64748b" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- transforms -->
+  <rect x="288" y="396" width="190" height="44" rx="10" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="383" y="416" font-size="13" font-weight="700" fill="#0f172a" text-anchor="middle">torchvision</text>
+  <text x="383" y="433" font-size="11" fill="#334155" text-anchor="middle">image and video transforms</text>
+
+  <rect x="288" y="452" width="190" height="44" rx="10" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="383" y="472" font-size="13" font-weight="700" fill="#0f172a" text-anchor="middle">torchaudio</text>
+  <text x="383" y="489" font-size="11" fill="#334155" text-anchor="middle">audio transforms</text>
+
+  <path d="M 482 446 L 516 446" stroke="#64748b" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- training / inference -->
+  <ellipse cx="596" cy="446" rx="76" ry="46" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text x="596" y="441" font-size="12.5" fill="#334155" text-anchor="middle">training /</text>
+  <text x="596" y="459" font-size="12.5" fill="#334155" text-anchor="middle">inference</text>
+
+  <path d="M 676 446 L 710 446" stroke="#64748b" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- torchcodec: encoding -->
+  <rect x="714" y="396" width="190" height="100" rx="10" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="809" y="424" font-size="13.5" font-weight="700" fill="#0f172a" text-anchor="middle">torchcodec</text>
+  <text x="809" y="448" font-size="12.5" fill="#334155" text-anchor="middle">encoding</text>
+  <text x="809" y="472" font-size="11.5" fill="#64748b" text-anchor="middle">image &#183; video &#183; audio</text>
+
+  <!-- ABI note -->
+  <rect x="230" y="508" width="500" height="26" rx="13" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="480" y="525" font-size="12" fill="#475569" text-anchor="middle">All three are ABI stable &#8212; one release works with multiple PyTorch versions</text>
+</svg>
