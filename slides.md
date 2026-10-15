@@ -86,6 +86,36 @@ style: |
   .lane { border-radius: 10px; padding: 8px 14px; font-size: 19px; text-align: center; font-family: "Liberation Mono", "Courier New", monospace; }
   .lane.v { border: 2px solid #ee4c2c; background: #fff7f5; }
   .lane.a { border: 2px solid #3b6fd8; background: #f4f7fd; }
+  .cuts { display: flex; align-items: center; justify-content: center; margin: 10px 0 18px; }
+  .cuts .cut { width: 80px; }
+  .cuts .stage { font-size: 26px; padding: 12px 18px; }
+  .cuts .stage small { font-size: 17px; font-family: "Liberation Mono", "Courier New", monospace; }
+  .cut { height: 90px; display: flex; justify-content: center; align-items: center; position: relative; }
+  .cut::before { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; border-left: 3px dashed #ee4c2c; }
+  .cut span { position: relative; background: #fff; color: #ee4c2c; font-size: 30px; line-height: 1.2; }
+  .branch { display: grid; grid-template-columns: auto 50px auto 70px auto; grid-template-rows: auto auto; align-items: center; justify-content: center; column-gap: 6px; row-gap: 10px; margin: 6px 0 16px; }
+  .branch .stage { font-size: 26px; padding: 12px 18px; }
+  .branch .stage small { font-size: 17px; }
+  .branch .arrow small { font-size: 16px; font-family: "Liberation Mono", "Courier New", monospace; }
+  .b-demux { grid-column: 1; grid-row: 1 / span 2; }
+  .b-a1 { grid-column: 2; grid-row: 1 / span 2; }
+  .b-decode { grid-column: 3; grid-row: 1 / span 2; }
+  .b-a2 { grid-column: 4; grid-row: 1; font-size: 36px; }
+  .b-cc { grid-column: 5; grid-row: 1; }
+  .b-a3 { grid-column: 4; grid-row: 2; font-size: 36px; color: #ee4c2c; }
+  .b-kernel { grid-column: 5; grid-row: 2; }
+  .stage.dim { color: #aaa; background: #fafafa; border: 2px dashed #ccc; }
+  .stage.dim small { color: #bbb; }
+  .vchain { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .vchain .stage { width: 260px; font-size: 22px; padding: 4px 12px; }
+  .vchain .stage small { display: inline; margin-left: 6px; }
+  .varrow { color: #999; font-size: 20px; text-align: center; line-height: 1.15; }
+  .varrow small { font-size: 16px; color: #555; }
+  .cost { display: block; font-size: 14px; font-weight: bold; color: #ee4c2c; text-transform: uppercase; letter-spacing: 0.5px; }
+  .cost.cheap { color: #999; }
+  .big-statement { text-align: center; font-size: 38px; font-weight: bold; color: #ee4c2c; margin-top: 18px; }
+  .new { background: #ee4c2c; color: #fff; border-radius: 6px; padding: 2px 10px; font-size: 18px; font-weight: bold; margin-right: 6px; }
+  .bottom-line { position: absolute; left: 70px; right: 70px; bottom: 90px; text-align: center; font-size: 28px; }
   .result { background: #fff4d6; border: 2px solid #e0a800; border-radius: 10px; padding: 12px 22px; font-size: 24px; }
   .result table { font-size: 20px; margin: 4px 0 0; }
   .result tr, .result th, .result td { background: transparent !important; border-color: #e0c060; padding: 4px 14px; }
@@ -95,17 +125,6 @@ style: |
   table { font-size: 22px; }
   .tuto { position: absolute; bottom: 24px; left: 70px; font-size: 18px; color: #777; }
   .tuto a { color: #ee4c2c; }
----
-
-<!-- _paginate: false -->
-
-## ⚠️ Note for reviewers
-
-**Status: very draft, vibed.**
-
-- The relevant content is there, and should be enough to decide whether comms / legal review is needed.
-- Visuals (template), phrasing, etc. will be heavily adjusted.
-
 ---
 
 <!-- _class: lead -->
@@ -139,6 +158,8 @@ How to make your media pipeline fast with these three libraries, using existing 
 
 </div>
 </div>
+
+<p class="muted" style="text-align: center">All benchmarks: <a href="https://github.com/NicolasHug/ptc-talk-2026">github.com/NicolasHug/ptc-talk-2026</a></p>
 
 ---
 
@@ -277,7 +298,6 @@ Encoding goes the other way:
 
 <span class="muted">Still on `torchvision.io` / `torchaudio` decoding? → TorchCodec [migration guide](https://meta-pytorch.org/torchcodec/main/generated_examples/migration/torchvision_migration.html)</span>
 
-<div class="tuto">📖 Docs: <a href="https://docs.pytorch.org/docs/2.14/notes/libtorch_stable_abi.html">LibTorch stable ABI</a></div>
 
 ---
 
@@ -349,7 +369,7 @@ A tradeoff: <strong class="orange">seek accuracy</strong> vs <strong class="oran
 | **Seeking** | frame-accurate | may be slightly off on some files |
 
 <div class="result">
-<div class="label">📊 Benchmark: remote 10 min 720p video (209 MB), create decoder + decode 16 frames</div>
+<div class="label">📊 <a href="https://github.com/NicolasHug/ptc-talk-2026/blob/main/bench/bench.py">Benchmark</a>: remote 10 min 720p video (209 MB), create decoder + decode 16 frames</div>
 <div><code>"exact"</code>: <strong>236 MB</strong> downloaded</div>
 <div><code>"approximate"</code>: <strong>28 MB</strong> downloaded</div>
 </div>
@@ -367,7 +387,7 @@ Local file, page-cached: creation 40 ms (exact) vs 4.4 ms (approximate).
 
 ## Custom frame mappings: exact *and* fast
 
-Pre-compute the index offline. Reuse it every time you decode.
+Pre-compute the index offline, reuse it every time you decode.
 
 ```bash
 ffprobe -i video.mp4 -select_streams 0 -show_frames \
@@ -380,7 +400,7 @@ with open("mappings.json") as f:
 ```
 
 **The best of both worlds:**
-- Frame-accurate seeking like `"exact"`
+- Seek accuracy like `"exact"`
 - Creation speed like `"approximate"`
 
 <div class="tuto">📖 Tutorial: <a href="https://meta-pytorch.org/torchcodec/main/generated_examples/decoding/custom_frame_mappings.html">Custom frame mappings</a></div>
@@ -415,7 +435,7 @@ Why it's (usually!) faster:
 - **YUV → RGB conversion**: expensive on CPU, extremely fast on GPU
 
 <div class="result">
-<div class="label">📊 Benchmark: decode all 300 frames of a 10s video (laptop: RTX 4080)</div>
+<div class="label">📊 <a href="https://github.com/NicolasHug/ptc-talk-2026/blob/main/bench/bench.py">Benchmark</a>: decode all 300 frames of a 10s video (laptop: RTX 4080)</div>
 <div style="display: flex; gap: 40px; align-items: center">
 <table>
 <tr><th></th><th>CPU</th><th>GPU</th><th>Speedup</th></tr>
@@ -451,7 +471,7 @@ set_nvdec_cache_capacity(64)   # default: 20 decoders per GPU
 - **tune the capacity!**
 
 <div class="result">
-<div class="label">📊 Benchmark: create GPU decoder + decode 10 frames, 10s 1080p video (laptop: RTX 4080)</div>
+<div class="label">📊 <a href="https://github.com/NicolasHug/ptc-talk-2026/blob/main/bench/bench.py">Benchmark</a>: create GPU decoder + decode 10 frames, 10s 1080p video (laptop: RTX 4080)</div>
 <div style="display: flex; gap: 40px; align-items: center">
 <table>
 <tr><th>No cache</th><th>Warm cache</th><th>Speedup</th></tr>
@@ -507,7 +527,7 @@ bench.py nvdec_cache, median of 20 runs. "No cache" = set_nvdec_cache_capacity(0
 <p class="spaced"><strong class="orange">All strategies compose!</strong> ① and ② run on threads or processes: decoding releases the GIL.</p>
 
 <div class="result">
-<div class="label">📊 Benchmark: decode all 18000 frames of a 10min 720p video (laptop CPU, 4 workers)</div>
+<div class="label">📊 <a href="https://github.com/NicolasHug/ptc-talk-2026/blob/main/bench/bench.py">Benchmark</a>: decode all 18000 frames of a 10min 720p video (laptop CPU, 4 workers)</div>
 <table>
 <tr><th>Sequential</th><th>① 4 threads</th><th>① 4 processes</th><th>③ 4 FFmpeg threads</th></tr>
 <tr><td>32.7 s</td><td>8.7 s (<strong>3.7×</strong>)</td><td>9.3 s (<strong>3.5×</strong>)</td><td>15.3 s (<strong>2.1×</strong>)</td></tr>
@@ -534,6 +554,7 @@ FFmpeg threads plateau: ~19% of the work stays serial (consistent with single-th
 <div class="stage">transform</div>
 </div>
 
+<div class="bottom-line"><code>VideoDecoder</code>: everything in one call. Low-level APIs: <strong class="orange">more knobs to hill-climb on</strong>.</div>
 <div class="tuto">📖 Tutorial: <a href="https://meta-pytorch.org/torchcodec/main/generated_examples/low_level/basics.html">Build your own decoding pipeline</a></div>
 
 ---
@@ -556,13 +577,20 @@ FFmpeg threads plateau: ~19% of the work stays serial (consistent with single-th
 </div>
 </div>
 
-`VideoDecoder` runs all three stages in one call. The low-level APIs expose each of them.
-
+<div class="bottom-line"><code>VideoDecoder</code>: everything in one call. Low-level APIs: <strong class="orange">more knobs to hill-climb on</strong>.</div>
 <div class="tuto">📖 Tutorial: <a href="https://meta-pytorch.org/torchcodec/main/generated_examples/low_level/basics.html">Build your own decoding pipeline</a></div>
 
 ---
 
 ## Low-level APIs: the basic loop
+
+<div class="zoom-box">
+<div class="pipeline">
+<div class="stage">demux<small>Demuxer</small></div><div class="arrow">→<small>Packet</small></div>
+<div class="stage">decode<small>VideoPacketDecoder</small></div><div class="arrow">→<small>RawFrame (YUV)</small></div>
+<div class="stage">color convert<small>ColorConverter</small></div><div class="arrow">→<small>Frame (RGB)</small></div>
+</div>
+</div>
 
 ```python
 from torchcodec.decoders import ColorConverter, Demuxer
@@ -575,12 +603,8 @@ for packet in demuxer:
     for raw_frame in packet_decoder.decode(packet):
         frame = color_converter.convert(raw_frame)
 
-# Same as VideoDecoder("video.mp4).get_all_frames()
+# Same as VideoDecoder("video.mp4").get_all_frames()
 ```
-
-- One object per stage: you control where and when each one runs
-- On GPU: `make_decoder(device="cuda")` and `ColorConverter(device="cuda")`
-- A `Demuxer` can follow **several streams at once**: audio + video in a single pass
 
 <div class="tuto">📖 Tutorial: <a href="https://meta-pytorch.org/torchcodec/main/generated_examples/low_level/basics.html">Build your own decoding pipeline</a></div>
 
@@ -588,7 +612,7 @@ for packet in demuxer:
 
 <!-- _class: dense -->
 
-## Multi-stream decoding: audio + video in one pass
+## Low-level APIs: audio + video in one pass
 
 <div class="pkts-label">Demuxer: interleaved packets from one file</div>
 <div class="pkts"><div class="pkt v">V</div><div class="pkt a">A</div><div class="pkt v">V</div><div class="pkt v">V</div><div class="pkt a">A</div><div class="pkt v">V</div><div class="pkt a">A</div><div class="pkt v">V</div><div class="pkt v">V</div><div class="pkt a">A</div><div class="pkt v">V</div><div class="pkt a">A</div></div>
@@ -621,61 +645,62 @@ for packet in demuxer:
 
 ## Low-level APIs: multi-threaded pipelines
 
-Each stage **releases the GIL** → run stages concurrently on threads.
+Each stage **releases the GIL** → cut the pipeline into threads at any stage boundary:
+
+<div class="cuts">
+<div class="stage">demux<small>Demuxer</small></div>
+<div class="cut"><span>✂</span></div>
+<div class="stage">decode<small>VideoPacketDecoder</small></div>
+<div class="cut"><span>✂</span></div>
+<div class="stage">color convert<small>ColorConverter</small></div>
+</div>
 
 ```python
-def convert_on_own_thread(device):
-    # [demux + decode] on one thread || [color convert] on another
-    raw_frames = prefetch(decode(packet_decoder, demux(demuxer)))
-    return color_convert(color_converter, raw_frames)
+# prefetch(): run the upstream stages on a background thread, through a bounded queue
+raw_frames = prefetch(decode(packet_decoder, demux(demuxer)))   # producer
+frames = color_convert(color_converter, raw_frames)             # consumer
 ```
 
-`prefetch()` = run the upstream generator on a background thread, through a bounded queue.
+<div class="result">
+<div class="label">📊 <a href="https://github.com/NicolasHug/ptc-talk-2026/blob/main/bench/bench.py">Benchmark</a>: decode all 300 frames of a 10s 1080p video (laptop CPU)</div>
+<table>
+<tr><th>VideoDecoder</th><th>Low-level, sequential</th><th>Low-level, producer / consumer</th></tr>
+<tr><td>1457 ms</td><td>1458 ms</td><td>940 ms (<strong>1.5×</strong>)</td></tr>
+</table>
+</div>
 
-Where to split depends on where the work is:
-- **CPU**: color conversion is costly → put it on its own thread
-- **CUDA**: decoding dominates → put demuxing on its own thread
-
-<div class="todo">TODO benchmark: VideoDecoder vs sequential vs convert_on_own_thread</div>
+<!--
+bench.py low_level_pipeline, median of 10 runs, pinned to 2 performance cores (taskset -c 0,2).
+Producer = demux + decode, consumer = color conversion.
+-->
 
 <div class="tuto">📖 Tutorial: <a href="https://meta-pytorch.org/torchcodec/main/generated_examples/low_level/pipelines.html">Multi-threaded decoding pipelines</a></div>
 
 ---
 
-## Low-level APIs: raw YUV and HDR
+## Low-level APIs: raw YUV frames
 
-<div class="columns">
-<div>
-
-**Raw YUV planes**: no conversion, no copy
+<div class="branch">
+<div class="stage b-demux">demux</div>
+<div class="arrow b-a1">→</div>
+<div class="stage b-decode">decode<small>→ RawFrame (YUV)</small></div>
+<div class="arrow b-a2">↗</div>
+<div class="stage b-cc dim">ColorConverter<small>default</small></div>
+<div class="arrow b-a3">↘</div>
+<div class="stage hl b-kernel">your own kernel<small>YUV → RGB + resize, fused</small></div>
+</div>
 
 ```python
 for raw_frame in packet_decoder.decode(packet):
-    Y, U, V = raw_frame.planes
-    raw_frame.bit_depth  # 10 for HDR
+    Y, U, V = raw_frame.planes        # the decoder's own planes: no conversion, no copy
+    out = my_yuv_to_rgb_and_resize(Y, U, V, size=(224, 224))   # e.g. a Triton kernel
 ```
 
+- **Fuse** color conversion with your transforms (e.g. resize) in one kernel, or train directly in YUV
+- Or just train on YUV!
 - 10-bit HDR → `uint16` planes, every bit intact
-- Write your own color conversion, or train in YUV space
 
-</div>
-<div>
-
-**HDR with `VideoDecoder`** (beta)
-
-```python
-VideoDecoder(path, output_dtype=torch.float32)
-VideoDecoder(path, output_dtype="auto")
-# SDR -> uint8, HDR -> float32
-```
-
-**Also unlocked by the low-level APIs:**
-- Endless sources: live streams, pipes
-
-</div>
-</div>
-
-<div class="tuto">📖 Tutorials: <a href="https://meta-pytorch.org/torchcodec/main/generated_examples/low_level/raw_data.html">Raw frames and raw audio samples</a> · <a href="https://meta-pytorch.org/torchcodec/main/generated_examples/decoding/hdr_decoding.html">Decoding HDR videos</a></div>
+<div class="tuto">📖 Tutorial: <a href="https://meta-pytorch.org/torchcodec/main/generated_examples/low_level/raw_data.html">Raw frames and raw audio samples</a></div>
 
 ---
 
@@ -689,93 +714,100 @@ VideoDecoder(path, output_dtype="auto")
 
 # Transforming
 
+(mostly images, but this applies to videos too!)
+
 ---
 
 <!-- _class: dense -->
 
-## Images: the fast pipeline
+## The bare minimum for an image pipeline
 
-<div class="pipeline">
-<div class="stage hl">decode_image<small>uint8, channels-last</small></div><div class="arrow">→</div>
-<div class="stage hl">resize / crop<small>on uint8!</small></div><div class="arrow">→</div>
-<div class="stage">ToDtype<small>float32</small></div><div class="arrow">→</div>
-<div class="stage">Normalize</div>
+<div class="columns" style="grid-template-columns: 2fr 3fr; align-items: center">
+<div class="vchain">
+<div class="stage hl">decode_image<small>TorchCodec</small><span class="cost">expensive</span></div>
+<div class="varrow">↓ <small>uint8 tensor, channels-last</small></div>
+<div class="stage hl">resize<small>TorchVision v2</small><span class="cost">expensive</span></div>
+<div class="varrow">↓</div>
+<div class="stage">ToDtype<small>float32</small><span class="cost cheap">cheap</span></div>
+<div class="varrow">↓</div>
+<div class="stage">Normalize<span class="cost cheap">cheap</span></div>
+</div>
+<div>
+
+What fast resizing needs:
+- **SIMD kernels** (AVX2, NEON), which need:
+  - `uint8` input
+  - <code>torchvision.transforms.<strong>v2</strong></code>
+  - **tensors**, not PIL images → TorchCodec image decoders
+- **Channels-last** memory
+
+</div>
 </div>
 
-```python
-from torchcodec.decoders import decode_image
-from torchvision.transforms import v2
-
-img = decode_image("image.jpg")   # uint8 (C, H, W), channels-last memory: ready for resize
-
-transforms = v2.Compose([
-    v2.RandomResizedCrop(size=(224, 224), antialias=True),   # uint8 + channels-last: SIMD fast path
-    v2.ToDtype(torch.float32, scale=True),                   # convert to float *after* resizing
-    v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-])
-out = transforms(img)
-```
-
-- `decode_image`: JPEG, PNG, WebP, GIF, AVIF, HEIC, format detected from the data
-- **No PIL anywhere**: no PIL decoding, no PIL → tensor copy
-
-<div class="todo">TODO: mention batched CUDA decoding, <code>decode_jpeg(list_of_jpegs, device="cuda")</code> (nvJPEG)</div>
-
----
-
-<!-- _class: dense -->
-
-## TorchVision transforms: why it's fast
-
-1. Use **`torchvision.transforms.v2`**
-2. Use **tensors**, not PIL images
-3. Use **`torch.uint8`**, especially for resizing: the SIMD kernels (AVX2, NEON) are for `uint8`
-4. Resize with bilinear, bicubic or **lanczos**
-5. Mind the **memory format**: resize prefers channels-last, which is what TorchCodec outputs
-
-TorchCodec decodes images and video frames straight to `uint8` channels-last tensors: **exactly what resize wants**.
-
-<span class="muted">Shape is `(C, H, W)` / `(N, C, H, W)` but memory is channels-last: avoid calling `.contiguous()` before resizing.</span>
+<div class="big-statement">TorchCodec + TorchVision give you all this by default!</div>
 
 <div class="tuto">📖 Docs: <a href="https://docs.pytorch.org/vision/stable/transforms.html#performance-considerations">TorchVision transforms performance considerations</a></div>
 
 ---
 
-## New: Lanczos interpolation
+<!-- _class: dense -->
+
+## TorchCodec + TorchVision: fast by default
 
 ```python
-v2.Resize(size=(224, 224), interpolation=v2.InterpolationMode.LANCZOS)
+from torchcodec.decoders import decode_image
+from torchvision.transforms import v2
+
+img = decode_image("image.jpg")             # uint8 CHW, channels-last memory
+
+transforms = v2.Compose([                   # use v2!
+    v2.Resize(size=(224, 224)),             # on uint8: SIMD fast path!
+    v2.ToDtype(torch.float32, scale=True),  # convert to float *after* resizing
+    v2.Normalize(mean=..., std=...),
+])
+out = transforms(img)
 ```
 
-- Alongside bilinear and bicubic
-- SIMD-optimized on **x86 (AVX2)** and **ARM (NEON)**
-- CPU, with `antialias=True`
+<div class="result">
+<div class="label">📊 <a href="https://github.com/NicolasHug/ptc-talk-2026/blob/main/bench/bench.py">Benchmark</a>: decode + resize + normalize a 1080p JPEG (laptop CPU, 1 thread)</div>
+<table>
+<tr><th>PIL pipeline</th><th>PIL-SIMD pipeline</th><th>TorchCodec + TorchVision (above)</th></tr>
+<tr><td>10.0 ms</td><td>4.4 ms</td><td><strong>4.0 ms</strong></td></tr>
+</table>
+</div>
 
-<div class="todo">TODO benchmark: resize PIL vs TorchVision float vs TorchVision uint8, bilinear / bicubic / lanczos, on x86 and ARM</div>
+
+<!--
+bench.py image_pipeline, median of 100 runs, torch.set_num_threads(1), pinned to one core.
+PIL pipeline: Image.open + load(), v2.Resize on the PIL image, ToImage + ToDtype, Normalize.
+Pillow-SIMD 12.1.1.post0 built from source with CC="gcc -mavx2" CFLAGS="-O3".
+JPEG decoding itself is the same speed (PIL 3.3 ms vs TorchCodec 2.9 ms) and gives bitwise-identical pixels.
+Resize to 224: PIL 5.5 ms, Pillow-SIMD 0.59 ms, TorchVision uint8 0.66 ms.
+The common Image.open(...).convert("RGB") idiom (e.g. ImageFolder) adds a full copy: ~5 ms more for PIL pipelines.
+-->
+
+- PIL-SIMD: x86 only (no NEON SIMD), and still pays the `PIL → tensor` copy.
+- `decode_image`: JPEG (CPU **and CUDA!**), PNG, WebP, GIF, AVIF, HEIC
 
 ---
 
-<!-- _class: dense -->
+## Results are the same as PIL's!
 
-## Decoder-native transforms
+- Use `antialias=True` (the default)
+- vs PIL: mean absolute error <strong class="orange">≈ 0.01</strong> at most (out of 255), max difference <strong class="orange">1-2</strong>
+- <strong class="orange">Bitwise identical</strong> to PIL-SIMD
+- What matters for models: **consistent** interpolation mode and antialias between training and inference
 
-Apply transforms **during** decoding, inside TorchCodec:
+<span class="new">NEW</span> in `TorchVision 0.27`: **Lanczos interpolation!** Alongside bilinear and bicubic
 
-```python
-from torchcodec.transforms import Resize
-decoder = VideoDecoder("video.mp4", transforms=[Resize(size=(480, 640))])
-
-# TorchVision transforms work too (but TorchVision is not required)
-decoder = VideoDecoder("video.mp4", transforms=[v2.Resize(size=(480, 640))])
-```
-
-- Supported: `Resize`, `CenterCrop`, `RandomCrop`
-- Main win: **memory**, full-resolution frames are never materialized
-- Can also be faster with multiple FFmpeg threads: measure on your setup
-
-<div class="todo">TODO benchmark: memory and time, decoder transforms vs TorchVision after decoding</div>
-
-<div class="tuto">📖 Tutorial: <a href="https://meta-pytorch.org/torchcodec/main/generated_examples/decoding/transforms.html">Decoder transforms</a></div>
+<!--
+vs Pillow 12.2, uint8, antialias=True:
+6 natural images (TorchVision gallery + COCO sample) downscaled to 224x224: MAE 0.0012 (bilinear), 0.0022 (bicubic), 0.0039 (Lanczos); max diff 1.
+Grace Hopper 517x606: downscaling max diff 1; upscaling to 1024x1024 / 1200x800: bilinear max 1, bicubic and Lanczos max 2; MAE <= 0.0051 everywhere.
+Random-noise images (worst case), 256x276 -> 120x128 / 500x480: max diff 1-2, <= 1% of pixels differ, MAE <= 0.0102 (Lanczos upscaling).
+vs Pillow-SIMD 12.1.1: bitwise identical for all three modes.
+antialias defaults to True since TorchVision 0.17. Lanczos: TorchVision 0.27 (April 2026).
+-->
 
 ---
 
@@ -788,10 +820,21 @@ samples = WavDecoder("audio.wav").get_all_samples()
 ```
 
 - Reads WAV data directly, **bypassing FFmpeg** entirely
-- Same `get_all_samples()` / `get_samples_played_in_range()` as `AudioDecoder`
-- Use it for WAV without resampling or channel remixing; otherwise use `AudioDecoder`
 
-<div class="todo">TODO benchmark: WavDecoder vs AudioDecoder on WAV files</div>
+<div class="result">
+<div class="label">📊 <a href="https://github.com/NicolasHug/ptc-talk-2026/blob/main/bench/bench.py">Benchmark</a>: create decoder + decode a WAV file (laptop CPU)</div>
+<table>
+<tr><th></th><th>AudioDecoder</th><th>WavDecoder</th><th>Speedup</th></tr>
+<tr><td><strong>5s clip</strong>, 16kHz mono</td><td>2.7 ms</td><td>0.05 ms</td><td><strong>50×</strong></td></tr>
+<tr><td><strong>10min</strong>, 48kHz stereo</td><td>202 ms</td><td>81 ms</td><td><strong>2.5×</strong></td></tr>
+<tr><td><strong>1s from a 10min file</strong></td><td>16.7 ms</td><td>0.06 ms</td><td><strong>280×</strong></td></tr>
+</table>
+</div>
+
+<!--
+bench.py wav_decoding, median of 50 runs, pinned to one core. 16-bit PCM WAV files.
+Last row: get_samples_played_in_range(300, 301) on the 10min 48kHz stereo file.
+-->
 
 <div class="tuto">📖 Tutorial: <a href="https://meta-pytorch.org/torchcodec/main/generated_examples/decoding/performance_tips.html">Performance tips</a></div>
 
@@ -819,7 +862,15 @@ with encoder.open_file("output.mp4"):
 
 ---
 
-## Cheat sheet
+<!-- _class: dense -->
+
+## Recap
+
+<div class="statement">
+
+**Decoding / encoding**: TorchCodec · **Transforms**: TorchVision, TorchAudio
+
+</div>
 
 | Symptom | Fix |
 |---|---|
@@ -827,11 +878,11 @@ with encoder.open_file("output.mp4"):
 | Slow to open long videos | `seek_mode="approximate"` or custom frame mappings |
 | CPU saturated by decoding, GPU starved | `device="cuda"`, tune `set_nvdec_cache_capacity()`, batched `decode_jpeg` |
 | Decoding many frames / many videos | Threads or processes, `num_ffmpeg_threads` |
-| Need more than `VideoDecoder` offers | Low-level APIs: multi-threaded pipelines, raw YUV |
-| Slow image pipeline | `decode_image` → TorchVision v2 on `uint8` (SIMD), then `ToDtype`, not PIL |
-| High memory from high-res frames | Decoder-native transforms |
+| Need more than `VideoDecoder` offers | Low-level APIs: multi-threaded pipelines, raw YUV access, multi-stream decoding |
+| Slow image pipeline | TorchCodec `decode_image` → TorchVision v2 `resize` on `uint8` (SIMD) |
 | Slow WAV decoding | `WavDecoder` |
 
-<br>
+<p class="spaced" style="text-align: center">Feedback and feature requests welcome! <a href="https://github.com/meta-pytorch/torchcodec/issues">TorchCodec</a> · <a href="https://github.com/pytorch/vision/issues">TorchVision</a> · <a href="https://github.com/pytorch/audio/issues">TorchAudio</a></p>
 
-<div class="tuto">📖 Tutorial: <a href="https://meta-pytorch.org/torchcodec/main/generated_examples/decoding/performance_tips.html">TorchCodec performance tips</a></div>
+
+<div class="tuto">📖 Tutorial: <a href="https://meta-pytorch.org/torchcodec/main/generated_examples/decoding/performance_tips.html">TorchCodec performance tips</a> · Benchmarks: <a href="https://github.com/NicolasHug/ptc-talk-2026">github.com/NicolasHug/ptc-talk-2026</a></div>

@@ -8,14 +8,24 @@ supports libx264.
 """
 
 import io
+import queue
 import subprocess
 import sys
+import threading
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from pathlib import Path
 from time import perf_counter_ns
 
 import torch
-from torchcodec.decoders import VideoDecoder, get_nvdec_cache_capacity, set_nvdec_cache_capacity
+from torchcodec.decoders import (
+    AudioDecoder,
+    ColorConverter,
+    Demuxer,
+    VideoDecoder,
+    WavDecoder,
+    get_nvdec_cache_capacity,
+    set_nvdec_cache_capacity,
+)
 from torchcodec.samplers import clips_at_regular_indices
 
 VIDEO_DIR = Path("videos")
@@ -85,6 +95,36 @@ class CountingFile(io.RawIOBase):
 
     def tell(self):
         return self.f.tell()
+
+
+def make_image(resolution):
+    path = VIDEO_DIR / f"image_{resolution}.jpg"
+    if not path.exists():
+        VIDEO_DIR.mkdir(exist_ok=True)
+        subprocess.run(
+            [
+                "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+                "-f", "lavfi", "-i", f"testsrc2=size={resolution}:duration=1",
+                "-frames:v", "1", "-q:v", "2", str(path),
+            ],
+            check=True,
+        )
+    return path
+
+
+def make_wav(duration_seconds, sample_rate, num_channels):
+    path = VIDEO_DIR / f"{duration_seconds}s_{sample_rate}hz_{num_channels}ch.wav"
+    if not path.exists():
+        VIDEO_DIR.mkdir(exist_ok=True)
+        subprocess.run(
+            [
+                "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+                "-f", "lavfi", "-i", f"sine=frequency=440:sample_rate={sample_rate}:duration={duration_seconds}",
+                "-ac", str(num_channels), "-c:a", "pcm_s16le", str(path),
+            ],
+            check=True,
+        )
+    return path
 
 
 def seek_mode():
@@ -158,7 +198,118 @@ def parallel_decoding():
         report_stats(bench(f, num_exp=3), unit="s")
 
 
-BENCHMARKS = [seek_mode, gpu_decoding, nvdec_cache, parallel_decoding]
+def demux(demuxer):
+    yield from demuxer
+
+
+def decode(packet_decoder, packets):
+    for packet in packets:
+        yield from packet_decoder.decode(packet)
+    yield from packet_decoder.drain()
+
+
+def color_convert(color_converter, raw_frames):
+    for raw_frame in raw_frames:
+        yield color_converter.convert(raw_frame)
+
+
+def prefetch(upstream, buffer_size=8):
+    """Run the upstream generator on a background thread, through a bounded queue."""
+    q = queue.Queue(maxsize=buffer_size)
+    done = object()
+
+    def producer():
+        for item in upstream:
+            q.put(item)
+        q.put(done)
+
+    threading.Thread(target=producer, daemon=True).start()
+    while (item := q.get()) is not done:
+        yield item
+
+
+def low_level_pipeline():
+    video = make_video(duration_seconds=10, resolution="1920x1080")
+
+    def stages():
+        demuxer = Demuxer(video)
+        return demuxer, demuxer.streams[0].make_decoder(), ColorConverter()
+
+    def video_decoder():
+        for _ in VideoDecoder(video, seek_mode="approximate"):
+            pass
+
+    def sequential():
+        demuxer, packet_decoder, color_converter = stages()
+        for _ in color_convert(color_converter, decode(packet_decoder, demux(demuxer))):
+            pass
+
+    def producer_consumer():
+        demuxer, packet_decoder, color_converter = stages()
+        raw_frames = prefetch(decode(packet_decoder, demux(demuxer)))
+        for _ in color_convert(color_converter, raw_frames):
+            pass
+
+    print("Decode all 300 frames of a 10s 1080p video, CPU")
+    for label, f in (
+        ("VideoDecoder", video_decoder),
+        ("low-level, sequential", sequential),
+        ("low-level, producer/consumer", producer_consumer),
+    ):
+        print(f"  {label:<29}", end="")
+        report_stats(bench(f, num_exp=10, warmup=1))
+
+
+def image_pipeline():
+    # For the Pillow-SIMD numbers, install it in place of Pillow, built with optimizations on:
+    #   CC="cc -mavx2" CFLAGS="-O3" pip install --no-binary pillow-simd pillow-simd
+    # Setting CC/CFLAGS drops Python's default -O2/-O3, so -O3 must be passed explicitly.
+    import PIL
+    from PIL import Image
+    from torchcodec.decoders import decode_image
+    from torchvision.transforms import v2
+
+    torch.set_num_threads(1)
+    data = make_image("1920x1080").read_bytes()
+    normalize = v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    resize = v2.Resize(size=(224, 224), antialias=True)
+    pil_transforms = v2.Compose([resize, v2.ToImage(), v2.ToDtype(torch.float32, scale=True), normalize])
+    tensor_transforms = v2.Compose([resize, v2.ToDtype(torch.float32, scale=True), normalize])
+
+    def pil_pipeline():
+        image = Image.open(io.BytesIO(data))
+        image.load()  # Decodes. Avoid .convert("RGB") here: it's a full extra copy.
+        pil_transforms(image)
+
+    def torchcodec_torchvision_pipeline():
+        tensor_transforms(decode_image(data))
+
+    print("Decode + resize + normalize a 1080p JPEG, 1 thread")
+    for label, f in (
+        (f"PIL {PIL.__version__}", pil_pipeline),
+        ("TorchCodec + TorchVision", torchcodec_torchvision_pipeline),
+    ):
+        print(f"  {label:<26}", end="")
+        report_stats(bench(f, num_exp=100, warmup=5))
+
+
+def wav_decoding():
+    short = make_wav(duration_seconds=5, sample_rate=16000, num_channels=1)
+    long = make_wav(duration_seconds=600, sample_rate=48000, num_channels=2)
+    cases = {
+        "5s 16kHz mono, all samples": lambda decoder_class: decoder_class(short).get_all_samples(),
+        "10min 48kHz stereo, all samples": lambda decoder_class: decoder_class(long).get_all_samples(),
+        "10min 48kHz stereo, 1s at 5min": lambda decoder_class: decoder_class(long).get_samples_played_in_range(300, 301),
+    }
+    print("Decode WAV files (create decoder + decode)")
+    for case, f in cases.items():
+        print(f"  {case}")
+        for decoder_class in (AudioDecoder, WavDecoder):
+            print(f"    {decoder_class.__name__:<13}", end="")
+            report_stats(bench(f, decoder_class, num_exp=50, warmup=2))
+
+
+BENCHMARKS = [seek_mode, gpu_decoding, nvdec_cache, parallel_decoding, low_level_pipeline, image_pipeline, wav_decoding]
 
 if __name__ == "__main__":
     names = sys.argv[1:] or [b.__name__ for b in BENCHMARKS]
