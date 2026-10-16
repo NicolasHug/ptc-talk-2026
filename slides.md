@@ -115,7 +115,34 @@ style: |
   .cost.cheap { color: #999; }
   .big-statement { text-align: center; font-size: 38px; font-weight: bold; color: #ee4c2c; margin-top: 18px; }
   .new { background: #ee4c2c; color: #fff; border-radius: 6px; padding: 2px 10px; font-size: 18px; font-weight: bold; margin-right: 6px; }
-  .bottom-line { position: absolute; left: 70px; right: 70px; bottom: 90px; text-align: center; font-size: 28px; }
+  .knobs-line { text-align: center; font-size: 28px; margin-top: 10px; }
+  .landed { display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: auto 1fr; gap: 16px 20px; margin-top: 4px; align-items: start; }
+  .c-codec { grid-column: 1; grid-row: 1; }
+  .c-vision { grid-column: 2; grid-row: 1; }
+  .c-audio { grid-column: 3; grid-row: 1 / span 2; }
+  .lcard { border: 2px solid #ddd; border-radius: 14px; padding: 14px 16px 16px; }
+  .lname { font-size: 32px; font-weight: bold; text-align: center; margin-bottom: 6px; }
+  .row { border-radius: 10px; padding: 6px 14px; margin-top: 8px; font-size: 24px; font-weight: bold; }
+  .row small { display: block; font-size: 17px; font-weight: normal; margin-top: 2px; }
+  .row.active { background: #e0f3e8; border: 2px solid #2a9d5c; color: #1e5c3a; }
+  .row.moved { background: #fff; border: 2px dashed #ee4c2c; color: #999; }
+  .row.moved small { color: #ee4c2c; font-weight: bold; }
+  .row.maint { background: #f3f3f3; border: 2px solid #ddd; color: #888; }
+  a.gh { color: inherit; text-decoration: none; }
+  .landed.big { grid-template-rows: auto; margin-top: 12px; }
+  .landed.big .c-audio { grid-row: 1; }
+  .landed.big .lname { font-size: 38px; margin-bottom: 8px; }
+  .landed.big .row { font-size: 27px; padding: 10px 14px; margin-top: 12px; }
+  .landed.big .row small { font-size: 20px; }
+  .landed.mini { grid-template-rows: auto; gap: 18px; margin: 6px 0 4px; }
+  .landed.mini .lcard { padding: 8px 14px 12px; }
+  .landed.mini .lname { font-size: 30px; margin-bottom: 4px; }
+  .landed.mini .row { font-size: 25px; padding: 8px 14px; margin-top: 6px; }
+  .landed.mini .row small { font-size: 18px; }
+  .why-big { font-size: 34px; margin-top: 10px; }
+  .why-big li { margin: 6px 0; }
+  .strategies.big { gap: 18px; }
+  .strategies.big .strategy { font-size: 28px; padding: 10px 22px; }
   .result { background: #fff4d6; border: 2px solid #e0a800; border-radius: 10px; padding: 12px 22px; font-size: 24px; }
   .result table { font-size: 20px; margin: 4px 0 0; }
   .result tr, .result th, .result td { background: transparent !important; border-color: #e0c060; padding: 4px 14px; }
@@ -139,9 +166,9 @@ Nicolas Hug (META), Scott Schneider (META)
 ## Plan
 
 <div class="libs">
-<div class="lib">TorchCodec<small>decode &amp; encode</small></div>
-<div class="lib">TorchVision<small>image &amp; video transforms</small></div>
-<div class="lib">TorchAudio<small>audio transforms</small></div>
+<div class="lib"><a class="gh" href="https://github.com/meta-pytorch/torchcodec">TorchCodec</a><small>decode &amp; encode</small></div>
+<div class="lib"><a class="gh" href="https://github.com/pytorch/vision">TorchVision</a><small>image &amp; video transforms</small></div>
+<div class="lib"><a class="gh" href="https://github.com/pytorch/audio">TorchAudio</a><small>audio transforms</small></div>
 </div>
 
 <div class="columns">
@@ -163,12 +190,25 @@ How to make your media pipeline fast with these three libraries, using existing 
 
 ---
 
-## The PyTorch media stack: before and now
+## Where the media libraries landed
 
-<div style="text-align: center">
-
-![h:500](img/media_libraries_2026.svg)
-
+<div class="landed big">
+<div class="lcard c-codec">
+<div class="lname"><a class="gh" href="https://github.com/meta-pytorch/torchcodec">TorchCodec</a></div>
+<div class="row active">Decoding &amp; encoding<small>images · video · audio · CPU &amp; CUDA</small></div>
+</div>
+<div class="lcard c-vision">
+<div class="lname"><a class="gh" href="https://github.com/pytorch/vision">TorchVision</a></div>
+<div class="row active">Transforms<small>images &amp; video</small></div>
+<div class="row moved"><s>Decoding &amp; encoding</s><small>→ moved to <a class="gh" href="https://github.com/meta-pytorch/torchcodec">TorchCodec</a></small></div>
+<div class="row maint">Models, datasets<small>maintenance mode</small></div>
+</div>
+<div class="lcard c-audio">
+<div class="lname"><a class="gh" href="https://github.com/pytorch/audio">TorchAudio</a></div>
+<div class="row active">Transforms<small>audio</small></div>
+<div class="row moved"><s>Decoding &amp; encoding</s><small>→ moved to <a class="gh" href="https://github.com/meta-pytorch/torchcodec">TorchCodec</a></small></div>
+<div class="row maint">Models, datasets, pipelines<small>maintenance mode</small></div>
+</div>
 </div>
 
 <!--
@@ -182,56 +222,58 @@ Now: one job per library.
 
 ---
 
-## One job per library
+## Why?
 
-<div class="three">
-<div class="card">
-
-### TorchCodec
-**Decode & encode**
-images · video · audio
-CPU and CUDA
-
-</div>
-<div class="card">
-
-### TorchVision
-**Transform**
-images and video
-resize, crop, augment…
-
-</div>
-<div class="card">
-
-### TorchAudio
-**Transform**
-audio
-spectrograms, resampling…
-
-</div>
+<div class="landed mini">
+<div class="lcard"><div class="lname"><a class="gh" href="https://github.com/meta-pytorch/torchcodec">TorchCodec</a></div><div class="row active">Decoding &amp; encoding<small>images · video · audio</small></div></div>
+<div class="lcard"><div class="lname"><a class="gh" href="https://github.com/pytorch/vision">TorchVision</a></div><div class="row active">Transforms<small>images &amp; video</small></div></div>
+<div class="lcard"><div class="lname"><a class="gh" href="https://github.com/pytorch/audio">TorchAudio</a></div><div class="row active">Transforms<small>audio</small></div></div>
 </div>
 
-<br>
+<div class="why-big">
 
-Why all media I/O moved to TorchCodec:
-- **Clearer for users**: one place for all decoding and encoding, designed as a whole
-- **Performance**: all optimization effort goes into one library
-- **Simpler packaging and maintenance**: the hard C/C++ dependencies (FFmpeg 4–9, NVDEC, libjpeg, libpng…) are contained in TorchCodec
+- **Clearer** for users
+- **Clearer** for us: performance focus
+- **Reduced maintenance** & dependencies
+- **Transforms**: the most popular APIs
+- **Models, datasets**: better served by the ecosystem
+
+</div>
 
 ---
 
-<!-- _class: dense -->
+<!-- _class: dense top -->
 
 ## How they fit together
 
-TorchCodec's <strong class="orange">output</strong> is TorchVision's and TorchAudio's <strong class="orange">input</strong>
+<a class="gh" href="https://github.com/meta-pytorch/torchcodec">TorchCodec</a>'s <strong class="orange">output</strong> is <a class="gh" href="https://github.com/pytorch/vision">TorchVision</a>'s and <a class="gh" href="https://github.com/pytorch/audio">TorchAudio</a>'s <strong class="orange">input</strong>
 
 
 <div class="pipeline">
 <div class="stage">encoded media<small>files, bytes</small></div><div class="arrow">→</div>
-<div class="stage hl">TorchCodec<small>decode</small></div><div class="arrow">→</div>
+<div class="stage hl"><a class="gh" href="https://github.com/meta-pytorch/torchcodec">TorchCodec</a><small>decode</small></div><div class="arrow">→</div>
 <div class="stage">tensors</div><div class="arrow">→</div>
-<div class="stage hl">TorchVision / TorchAudio<small>transform</small></div>
+<div class="stage hl"><a class="gh" href="https://github.com/pytorch/vision">TorchVision</a> / <a class="gh" href="https://github.com/pytorch/audio">TorchAudio</a><small>transform</small></div>
+</div>
+
+<div class="statement">
+
+</div>
+
+---
+
+<!-- _class: dense top -->
+
+## How they fit together
+
+<a class="gh" href="https://github.com/meta-pytorch/torchcodec">TorchCodec</a>'s <strong class="orange">output</strong> is <a class="gh" href="https://github.com/pytorch/vision">TorchVision</a>'s and <a class="gh" href="https://github.com/pytorch/audio">TorchAudio</a>'s <strong class="orange">input</strong>
+
+
+<div class="pipeline">
+<div class="stage">encoded media<small>files, bytes</small></div><div class="arrow">→</div>
+<div class="stage hl"><a class="gh" href="https://github.com/meta-pytorch/torchcodec">TorchCodec</a><small>decode</small></div><div class="arrow">→</div>
+<div class="stage">tensors</div><div class="arrow">→</div>
+<div class="stage hl"><a class="gh" href="https://github.com/pytorch/vision">TorchVision</a> / <a class="gh" href="https://github.com/pytorch/audio">TorchAudio</a><small>transform</small></div>
 </div>
 
 <div class="statement">
@@ -241,7 +283,7 @@ TorchCodec's <strong class="orange">output</strong> is TorchVision's and TorchAu
 <div class="columns">
 <div>
 
-**Video**: TorchCodec → TorchVision
+**Video**: <a class="gh" href="https://github.com/meta-pytorch/torchcodec">TorchCodec</a> → <a class="gh" href="https://github.com/pytorch/vision">TorchVision</a>
 
 ```python
 import torch
@@ -261,7 +303,7 @@ batch = transform(clip)
 </div>
 <div>
 
-**Audio**: TorchCodec → TorchAudio
+**Audio**: <a class="gh" href="https://github.com/meta-pytorch/torchcodec">TorchCodec</a> → <a class="gh" href="https://github.com/pytorch/audio">TorchAudio</a>
 
 ```python
 from torchcodec.decoders import AudioDecoder
@@ -281,12 +323,12 @@ Encoding goes the other way:
 </div>
 </div>
 
+
 ---
 
-## TorchVision and TorchAudio are **not** deprecated
+## <a class="gh" href="https://github.com/pytorch/vision">TorchVision</a> and <a class="gh" href="https://github.com/pytorch/audio">TorchAudio</a> are **not** deprecated
 
 - They're **focused**: transforms are what the community uses most, so that's where the effort goes
-- Models, datasets, pipelines: no longer under active development, better served by the ecosystem (e.g. HuggingFace)
 
 <div class="card">
 
@@ -296,8 +338,7 @@ Encoding goes the other way:
 
 </div>
 
-<span class="muted">Still on `torchvision.io` / `torchaudio` decoding? → TorchCodec [migration guide](https://meta-pytorch.org/torchcodec/main/generated_examples/migration/torchvision_migration.html)</span>
-
+<span class="muted">Still on `torchvision.io` / `torchaudio` decoding? → <a class="gh" href="https://github.com/meta-pytorch/torchcodec">TorchCodec</a> [migration guide](https://meta-pytorch.org/torchcodec/main/generated_examples/migration/torchvision_migration.html)</span>
 
 ---
 
@@ -331,11 +372,11 @@ Every stage can be the bottleneck. Let's go through them in order.
 ## Open from anywhere
 
 ```python
-decoder = VideoDecoder("video.mp4")   # path, bytes, tensor of bytes
+decoder = VideoDecoder("video.mp4")   # path, URL, bytes, tensor of bytes
 ```
 
 
-But also <strong class="orange">file-like objects!</strong>
+But also <strong class="orange">file-like objects.</strong> Don't download the whole file!
 
 
 ```python
@@ -346,7 +387,13 @@ with fsspec.open("https://.../video.mp4") as f:   # or s3://, gs://, ...
     frame = decoder[1000]
 ```
 
-- `decoder[1000]` **seeks** to 1000: only the bytes around there are downloaded, **not the whole file from the start**
+Only downloads the bytes around frame `1000`.
+
+<!--
+A direct URL also downloads only what's needed (FFmpeg's HTTP uses Range requests): frame 1000 of the 209 MB test video
+= 7.5 MB with a URL, 16.1 MB with fsspec (default 5 MB blocks), 209 MB if downloading first. The server must support
+Range requests (S3, GCS, CDNs, nginx... do). The point of file-like objects is generality: any storage, not just FFmpeg's protocols.
+-->
 
 <div class="tuto">📖 Tutorial: <a href="https://meta-pytorch.org/torchcodec/main/generated_examples/decoding/file_like.html">Streaming data through file-like support</a></div>
 
@@ -458,8 +505,8 @@ The laptop GPU has 1 NVDEC; GB200 / B200 / H100 have 7, A100 has 5.
 
 ## GPU decoding: the NVDEC decoder cache
 
-Creating and destructing a `VideoDecoder` is very expensive!
-TorchCodec **caches and reuses** the underlying hardware resources.
+Creating and destructing a `VideoDecoder(..., device="cuda")` is very expensive!
+<a class="gh" href="https://github.com/meta-pytorch/torchcodec">TorchCodec</a> **caches and reuses** the underlying hardware resources.
 
 ```python
 from torchcodec.decoders import set_nvdec_cache_capacity
@@ -546,7 +593,7 @@ FFmpeg threads plateau: ~19% of the work stays serial (consistent with single-th
 
 <!-- _class: top -->
 
-## Low-level decoding APIs - New!
+## Low-level decoding APIs: new in TorchCodec 0.17
 
 <div class="short pipeline">
 <div class="stage">open</div><div class="arrow">→</div>
@@ -554,14 +601,13 @@ FFmpeg threads plateau: ~19% of the work stays serial (consistent with single-th
 <div class="stage">transform</div>
 </div>
 
-<div class="bottom-line"><code>VideoDecoder</code>: everything in one call. Low-level APIs: <strong class="orange">more knobs to hill-climb on</strong>.</div>
 <div class="tuto">📖 Tutorial: <a href="https://meta-pytorch.org/torchcodec/main/generated_examples/low_level/basics.html">Build your own decoding pipeline</a></div>
 
 ---
 
 <!-- _class: top -->
 
-## Low-level decoding APIs - New!
+## Low-level decoding APIs: new in TorchCodec 0.17
 
 <div class="short pipeline">
 <div class="stage">open</div><div class="arrow">→</div>
@@ -577,7 +623,7 @@ FFmpeg threads plateau: ~19% of the work stays serial (consistent with single-th
 </div>
 </div>
 
-<div class="bottom-line"><code>VideoDecoder</code>: everything in one call. Low-level APIs: <strong class="orange">more knobs to hill-climb on</strong>.</div>
+<div class="knobs-line"><code>VideoDecoder</code>: everything in one call. Low-level APIs: <strong class="orange">more knobs to hill-climb on</strong>.</div>
 <div class="tuto">📖 Tutorial: <a href="https://meta-pytorch.org/torchcodec/main/generated_examples/low_level/basics.html">Build your own decoding pipeline</a></div>
 
 ---
@@ -610,36 +656,33 @@ for packet in demuxer:
 
 ---
 
-<!-- _class: dense -->
 
-## Low-level APIs: audio + video in one pass
+## What the low-level APIs enable
 
-<div class="pkts-label">Demuxer: interleaved packets from one file</div>
-<div class="pkts"><div class="pkt v">V</div><div class="pkt a">A</div><div class="pkt v">V</div><div class="pkt v">V</div><div class="pkt a">A</div><div class="pkt v">V</div><div class="pkt a">A</div><div class="pkt v">V</div><div class="pkt v">V</div><div class="pkt a">A</div><div class="pkt v">V</div><div class="pkt a">A</div></div>
-<div class="lanes arrows"><div>↓ video packets</div><div>↓ audio packets</div></div>
-<div class="lanes">
-<div class="lane v">VideoPacketDecoder → ColorConverter → frames</div>
-<div class="lane a">AudioPacketDecoder → AudioConverter → samples</div>
+<div class="strategies big">
+<div class="strategy">
+
+**① Multi-threaded pipelines**: run the stages concurrently
+
+</div>
+<div class="strategy">
+
+**② Multi-stream decoding**: audio + video in a single pass
+
+</div>
+<div class="strategy">
+
+**③ Raw YUV frames**: custom color conversion, fused kernels, 10-bit HDR
+
+</div>
+<div class="strategy">
+
+**Also**: endless sources (live streams, pipes), cheap keyframe-only decoding
+
+</div>
 </div>
 
-```python
-demuxer = Demuxer("video.mp4", streams=("video", "audio"))
-video_stream, audio_stream = demuxer.streams
-decoders = {s.index: s.make_decoder() for s in demuxer.streams}
-color_converter, audio_converter = ColorConverter(), AudioConverter()
-
-for packet in demuxer:
-    for raw in decoders[packet.stream_index].decode(packet):
-        if packet.stream_index == video_stream.index:
-            frame = color_converter.convert(raw)
-        else:
-            samples = audio_converter.convert(raw)
-```
-
-- **Read the file once**, instead of once per stream
-- Also works for several video streams or audio tracks: `streams="all"`
-
-<div class="tuto">📖 Tutorial: <a href="https://meta-pytorch.org/torchcodec/main/generated_examples/low_level/basics.html">Build your own decoding pipeline</a></div>
+<div class="big-statement">Let's go over ①, ② and ③</div>
 
 ---
 
@@ -675,6 +718,39 @@ Producer = demux + decode, consumer = color conversion.
 -->
 
 <div class="tuto">📖 Tutorial: <a href="https://meta-pytorch.org/torchcodec/main/generated_examples/low_level/pipelines.html">Multi-threaded decoding pipelines</a></div>
+
+---
+
+<!-- _class: dense -->
+
+## Low-level APIs: audio + video in one pass
+
+<div class="pkts-label">Demuxer: interleaved packets from one file</div>
+<div class="pkts"><div class="pkt v">V</div><div class="pkt a">A</div><div class="pkt v">V</div><div class="pkt v">V</div><div class="pkt a">A</div><div class="pkt v">V</div><div class="pkt a">A</div><div class="pkt v">V</div><div class="pkt v">V</div><div class="pkt a">A</div><div class="pkt v">V</div><div class="pkt a">A</div></div>
+<div class="lanes arrows"><div>↓ video packets</div><div>↓ audio packets</div></div>
+<div class="lanes">
+<div class="lane v">VideoPacketDecoder → ColorConverter → frames</div>
+<div class="lane a">AudioPacketDecoder → AudioConverter → samples</div>
+</div>
+
+```python
+demuxer = Demuxer("video.mp4", streams=("video", "audio"))
+video_stream, audio_stream = demuxer.streams
+decoders = {s.index: s.make_decoder() for s in demuxer.streams}
+color_converter, audio_converter = ColorConverter(), AudioConverter()
+
+for packet in demuxer:
+    for raw in decoders[packet.stream_index].decode(packet):
+        if packet.stream_index == video_stream.index:
+            frame = color_converter.convert(raw)
+        else:
+            samples = audio_converter.convert(raw)
+```
+
+- **Read the file once**, instead of once per stream
+- Also works for several video streams or audio tracks: `streams="all"`
+
+<div class="tuto">📖 Tutorial: <a href="https://meta-pytorch.org/torchcodec/main/generated_examples/low_level/basics.html">Build your own decoding pipeline</a></div>
 
 ---
 
@@ -724,9 +800,9 @@ for raw_frame in packet_decoder.decode(packet):
 
 <div class="columns" style="grid-template-columns: 2fr 3fr; align-items: center">
 <div class="vchain">
-<div class="stage hl">decode_image<small>TorchCodec</small><span class="cost">expensive</span></div>
+<div class="stage hl">decode_image<small><a class="gh" href="https://github.com/meta-pytorch/torchcodec">TorchCodec</a></small><span class="cost">expensive</span></div>
 <div class="varrow">↓ <small>uint8 tensor, channels-last</small></div>
-<div class="stage hl">resize<small>TorchVision v2</small><span class="cost">expensive</span></div>
+<div class="stage hl">resize<small><a class="gh" href="https://github.com/pytorch/vision">TorchVision</a> v2</small><span class="cost">expensive</span></div>
 <div class="varrow">↓</div>
 <div class="stage">ToDtype<small>float32</small><span class="cost cheap">cheap</span></div>
 <div class="varrow">↓</div>
@@ -738,13 +814,13 @@ What fast resizing needs:
 - **SIMD kernels** (AVX2, NEON), which need:
   - `uint8` input
   - <code>torchvision.transforms.<strong>v2</strong></code>
-  - **tensors**, not PIL images → TorchCodec image decoders
+  - **tensors**, not PIL images → <a class="gh" href="https://github.com/meta-pytorch/torchcodec">TorchCodec</a> image decoders
 - **Channels-last** memory
 
 </div>
 </div>
 
-<div class="big-statement">TorchCodec + TorchVision give you all this by default!</div>
+<div class="big-statement"><a class="gh" href="https://github.com/meta-pytorch/torchcodec">TorchCodec</a> + <a class="gh" href="https://github.com/pytorch/vision">TorchVision</a> give you all this by default!</div>
 
 <div class="tuto">📖 Docs: <a href="https://docs.pytorch.org/vision/stable/transforms.html#performance-considerations">TorchVision transforms performance considerations</a></div>
 
@@ -752,7 +828,7 @@ What fast resizing needs:
 
 <!-- _class: dense -->
 
-## TorchCodec + TorchVision: fast by default
+## <a class="gh" href="https://github.com/meta-pytorch/torchcodec">TorchCodec</a> + <a class="gh" href="https://github.com/pytorch/vision">TorchVision</a>: fast by default
 
 ```python
 from torchcodec.decoders import decode_image
@@ -771,7 +847,7 @@ out = transforms(img)
 <div class="result">
 <div class="label">📊 <a href="https://github.com/NicolasHug/ptc-talk-2026/blob/main/bench/bench.py">Benchmark</a>: decode + resize + normalize a 1080p JPEG (laptop CPU, 1 thread)</div>
 <table>
-<tr><th>PIL pipeline</th><th>PIL-SIMD pipeline</th><th>TorchCodec + TorchVision (above)</th></tr>
+<tr><th>PIL pipeline</th><th>PIL-SIMD pipeline</th><th><a class="gh" href="https://github.com/meta-pytorch/torchcodec">TorchCodec</a> + <a class="gh" href="https://github.com/pytorch/vision">TorchVision</a> (above)</th></tr>
 <tr><td>10.0 ms</td><td>4.4 ms</td><td><strong>4.0 ms</strong></td></tr>
 </table>
 </div>
@@ -868,7 +944,7 @@ with encoder.open_file("output.mp4"):
 
 <div class="statement">
 
-**Decoding / encoding**: TorchCodec · **Transforms**: TorchVision, TorchAudio
+**Decoding / encoding**: <a class="gh" href="https://github.com/meta-pytorch/torchcodec">TorchCodec</a> · **Transforms**: <a class="gh" href="https://github.com/pytorch/vision">TorchVision</a>, <a class="gh" href="https://github.com/pytorch/audio">TorchAudio</a>
 
 </div>
 
@@ -879,7 +955,7 @@ with encoder.open_file("output.mp4"):
 | CPU saturated by decoding, GPU starved | `device="cuda"`, tune `set_nvdec_cache_capacity()`, batched `decode_jpeg` |
 | Decoding many frames / many videos | Threads or processes, `num_ffmpeg_threads` |
 | Need more than `VideoDecoder` offers | Low-level APIs: multi-threaded pipelines, raw YUV access, multi-stream decoding |
-| Slow image pipeline | TorchCodec `decode_image` → TorchVision v2 `resize` on `uint8` (SIMD) |
+| Slow image pipeline | <a class="gh" href="https://github.com/meta-pytorch/torchcodec">TorchCodec</a> `decode_image` → <a class="gh" href="https://github.com/pytorch/vision">TorchVision</a> v2 `resize` on `uint8` (SIMD) |
 | Slow WAV decoding | `WavDecoder` |
 
 <p class="spaced" style="text-align: center">Feedback and feature requests welcome! <a href="https://github.com/meta-pytorch/torchcodec/issues">TorchCodec</a> · <a href="https://github.com/pytorch/vision/issues">TorchVision</a> · <a href="https://github.com/pytorch/audio/issues">TorchAudio</a></p>
