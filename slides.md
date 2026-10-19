@@ -129,6 +129,7 @@ style: |
   .row.moved small { color: #ee4c2c; font-weight: bold; }
   .row.maint { background: #f3f3f3; border: 2px solid #ddd; color: #888; }
   a.gh { color: inherit; text-decoration: none; }
+  a.plain { color: inherit; text-decoration: none; }
   .landed.big { grid-template-rows: auto; margin-top: 12px; }
   .landed.big .c-audio { grid-row: 1; }
   .landed.big .lname { font-size: 38px; margin-bottom: 8px; }
@@ -221,6 +222,7 @@ CPU and **CUDA**
 
 ### Video
 **Decode** and **encode**
+All **FFmpeg** codecs
 CPU and **CUDA**
 HDR, samplers
 
@@ -229,6 +231,7 @@ HDR, samplers
 
 ### Audio
 **Decode** and **encode**
+All **FFmpeg** codecs
 Resampling, remixing
 Fast `WavDecoder`
 
@@ -253,6 +256,7 @@ CPU and **CUDA**
 
 ### Video
 **Decode** and **encode**
+All **FFmpeg** codecs
 CPU and **CUDA**
 HDR, samplers
 
@@ -261,6 +265,7 @@ HDR, samplers
 
 ### Audio
 **Decode** and **encode**
+All **FFmpeg** codecs
 Resampling, remixing
 Fast `WavDecoder`
 
@@ -286,13 +291,13 @@ Fast `WavDecoder`
 <div class="landed two">
 <div class="lcard">
 <div class="lname"><a class="gh" href="https://github.com/pytorch/vision">TorchVision</a></div>
-<div class="row active"><a class="gh" href="https://docs.pytorch.org/vision/stable/transforms.html">Transforms</a><small>resize, crop, flip, color jitter, AutoAugment, …<br><strong>images, videos, boxes, masks</strong></small></div>
+<div class="row active"><a class="plain" href="https://docs.pytorch.org/vision/stable/transforms.html">Transforms</a><small>resize, crop, flip, color jitter, AutoAugment, …<br><strong>images, videos, boxes, masks</strong></small></div>
 <div class="row moved"><s>Decoding &amp; encoding</s><small>→ moved to TorchCodec</small></div>
 <div class="row maint">Models, datasets<small>maintenance mode</small></div>
 </div>
 <div class="lcard">
 <div class="lname"><a class="gh" href="https://github.com/pytorch/audio">TorchAudio</a></div>
-<div class="row active"><a class="gh" href="https://docs.pytorch.org/audio/stable/transforms.html">Transforms</a><small>mel spectrogram, MFCC, resample, masking, …</small></div>
+<div class="row active"><a class="plain" href="https://docs.pytorch.org/audio/stable/transforms.html">Transforms</a><small>mel spectrogram, MFCC, resample, masking, …</small></div>
 <div class="row moved"><s>Decoding &amp; encoding</s><small>→ moved to TorchCodec</small></div>
 <div class="row maint">Models, datasets, pipelines<small>maintenance mode</small></div>
 </div>
@@ -341,7 +346,7 @@ Encoding goes the other way: `VideoEncoder`, `AudioEncoder`, …
 
 ---
 
-## All three libraries are ABI stable
+## All three libraries are ABI stable!
 
 - A release <strong class="orange">keeps working with the PyTorch versions that come after it</strong>
 
