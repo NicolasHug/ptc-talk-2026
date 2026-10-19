@@ -159,6 +159,9 @@ style: |
   .abi-card.now { background: #e0f3e8; border: 2px solid #2a9d5c; color: #1e5c3a; }
   .abi-label { font-size: 18px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
   .abi-arrow { font-size: 26px; font-weight: normal; line-height: 1.2; }
+  .rules { font-size: 30px; }
+  .rules li { margin: 14px 0; }
+  .why-line { text-align: center; font-size: 26px; margin-top: 18px; padding: 10px 20px; background: #f6f7f9; border-radius: 12px; }
   .result { background: #fff4d6; border: 2px solid #e0a800; border-radius: 10px; padding: 12px 22px; font-size: 24px; }
   .result table { font-size: 20px; margin: 4px 0 0; }
   .result tr, .result th, .result td { background: transparent !important; border-color: #e0c060; padding: 4px 14px; }
@@ -510,15 +513,17 @@ Why it's (usually!) faster:
 <div style="display: flex; gap: 40px; align-items: center">
 <table>
 <tr><th></th><th>CPU</th><th>GPU</th><th>Speedup</th></tr>
-<tr><td><strong>1080p</strong></td><td>1466 ms</td><td>370 ms</td><td><strong>4×</strong></td></tr>
-<tr><td><strong>4K</strong></td><td>4394 ms</td><td>1430 ms</td><td><strong>3×</strong></td></tr>
+<tr><td><strong>1080p</strong></td><td>1115 ms</td><td>379 ms</td><td><strong>3×</strong></td></tr>
+<tr><td><strong>4K</strong></td><td>4408 ms</td><td>1446 ms</td><td><strong>3×</strong></td></tr>
 </table>
 <div style="font-size: 26px"><strong>On a warm cache!</strong></div>
 </div>
 </div>
 
 <!--
-bench.py gpu_decoding, median of 10 runs, NVDEC cache warm. CPU = 1 FFmpeg thread.
+bench.py gpu_decoding, median of 10 runs, NVDEC cache warm. CPU = 1 FFmpeg thread, pinned to one performance core.
+CPU timings on this laptop flip between a fast and a slow state (~30%): slide uses the fast state (1080p and 4K measured
+back to back). In the slow state CPU is 1459 / 5813 ms -> ~4x. Both CPU and GPU scale linearly with pixels.
 GPU decoding barely uses the CPU.
 The laptop GPU has 1 NVDEC; GB200 / B200 / H100 have 7, A100 has 5.
 -->
@@ -527,19 +532,21 @@ The laptop GPU has 1 NVDEC; GB200 / B200 / H100 have 7, A100 has 5.
 
 ---
 
+<!-- _class: dense -->
+
 ## GPU decoding: the NVDEC decoder cache
 
-Creating and destructing a `VideoDecoder(..., device="cuda")` is very expensive!
-<a class="gh" href="https://github.com/meta-pytorch/torchcodec">TorchCodec</a> **caches and reuses** the underlying hardware resources.
+Creating a GPU decoder is expensive → <a class="gh" href="https://github.com/meta-pytorch/torchcodec">TorchCodec</a> **caches and reuses** them automatically
 
 ```python
-from torchcodec.decoders import set_nvdec_cache_capacity
-
-set_nvdec_cache_capacity(64)   # default: 20 decoders per GPU
+d1 = VideoDecoder("video1.mp4", device="cuda")   # creates a hardware decoder (slow)
+...                                              # d1 goes out of scope → back to the cache
+d2 = VideoDecoder("video2.mp4", device="cuda")   # same codec & resolution: reused (fast!)
 ```
 
-- A cached decoder is reused for a new video with the same codec and frame dimensions (LRU eviction)
-- **tune the capacity!**
+**What you need to do:**
+- **Nothing** by default: reuse is automatic
+- More than 20 decoders in flight, or many resolutions? → `set_nvdec_cache_capacity(N)`
 
 <div class="result">
 <div class="label">📊 <a href="https://github.com/NicolasHug/ptc-talk-2026/blob/main/bench/bench.py">Benchmark</a>: create GPU decoder + decode 10 frames, 10s 1080p video (laptop: RTX 4080)</div>
@@ -554,6 +561,10 @@ set_nvdec_cache_capacity(64)   # default: 20 decoders per GPU
 
 <!--
 bench.py nvdec_cache, median of 20 runs. "No cache" = set_nvdec_cache_capacity(0).
+Cache: per GPU, per process, LRU, default capacity 20. Key: codec, coded size, chroma format, bit depth.
+Two decoders alive at the same time each need their own hardware decoder; reuse happens when one is released
+(freed by refcounting as soon as the last reference is gone: function return, reassignment, del.
+No block scope in Python: a variable set in a for loop stays alive until the function returns).
 -->
 
 ---
@@ -680,38 +691,6 @@ for packet in demuxer:
 
 ---
 
-
-## What the low-level APIs enable
-
-<div class="strategies big">
-<div class="strategy">
-
-**① Multi-threaded pipelines**: run the stages concurrently
-
-</div>
-<div class="strategy">
-
-**② Multi-stream decoding**: audio + video in a single pass
-
-</div>
-<div class="strategy">
-
-**③ Raw YUV frames**: custom color conversion, fused kernels, 10-bit HDR
-
-</div>
-<div class="strategy">
-
-**④ Keyframe positions**: cheap frames, great for sampling
-
-</div>
-</div>
-
-<p class="spaced" style="text-align: center">Also: endless sources (live streams, pipes)</p>
-
-<div class="big-statement">Let's go over them!</div>
-
----
-
 ## Low-level APIs: multi-threaded pipelines
 
 Each stage **releases the GIL** → cut the pipeline into threads at any stage boundary:
@@ -809,16 +788,27 @@ for raw_frame in packet_decoder.decode(packet):
 
 ## Low-level APIs: keyframe positions
 
-```python
-demuxer = Demuxer("video.mp4")
-index = demuxer.streams[0].scan()   # one pass over the packets, no decoding
-
-index.key_frame_indices             # exact keyframe positions
-index.pts_seconds[index.key_frame_indices]
-```
-
 - Keyframes are the **cheapest frames to decode**
 - Great for **samplers** and thumbnails: sample at or near keyframes for fast training data
+
+```python
+demuxer = Demuxer("video.mp4")
+index = demuxer.streams[0].scan()    # one pass over the packets, no decoding
+key_frame_times = index.pts_seconds[index.key_frame_indices]
+
+demuxer.seek(key_frame_times[3])     # lands right on a keyframe
+```
+
+
+<div class="tuto">📖 Tutorial: <a href="https://meta-pytorch.org/torchcodec/main/generated_examples/low_level/basics.html">Build your own decoding pipeline</a></div>
+
+---
+
+
+## Low-level APIs: what else they unlock
+
+- **Live streams and pipes**: sources with no duration and no end
+- **Decoding raw packet data**, without a demuxer or container: in progress, <a href="https://github.com/meta-pytorch/torchcodec/issues">tell us what you need!</a>
 
 <div class="tuto">📖 Tutorial: <a href="https://meta-pytorch.org/torchcodec/main/generated_examples/low_level/basics.html">Build your own decoding pipeline</a></div>
 
@@ -840,7 +830,7 @@ index.pts_seconds[index.key_frame_indices]
 
 <!-- _class: dense -->
 
-## The bare minimum for an image pipeline
+## Fast image pipelines: just 3 rules
 
 <div class="columns" style="grid-template-columns: 2fr 3fr; align-items: center">
 <div class="vchain">
@@ -854,17 +844,18 @@ index.pts_seconds[index.key_frame_indices]
 </div>
 <div>
 
-What fast resizing needs:
-- **SIMD kernels** (AVX2, NEON), which need:
-  - `uint8` input
-  - <code>torchvision.transforms.<strong>v2</strong></code>
-  - **tensors**, not PIL images → <a class="gh" href="https://github.com/meta-pytorch/torchcodec">TorchCodec</a> image decoders
-- **Channels-last** memory
+<div class="rules">
+
+1. **Decode with <a class="gh" href="https://github.com/meta-pytorch/torchcodec">TorchCodec</a>**: `decode_image`
+2. **Use** <code>torchvision.transforms.<strong>v2</strong></code>
+3. **Resize on `uint8`**, before converting to float
+
+</div>
 
 </div>
 </div>
 
-<div class="big-statement"><a class="gh" href="https://github.com/meta-pytorch/torchcodec">TorchCodec</a> + <a class="gh" href="https://github.com/pytorch/vision">TorchVision</a> give you all this by default!</div>
+<div class="why-line"><strong>Why?</strong> You want <strong class="orange">SIMD decoding</strong> (<code>libjpeg-turbo</code>) and <strong class="orange">SIMD resizing</strong> (AVX2, NEON: needs <code>uint8</code>, channels-last tensors). That's what <code>decode_image</code> + <code>transforms.v2</code> give you.</div>
 
 <div class="tuto">📖 Docs: <a href="https://docs.pytorch.org/vision/stable/transforms.html#performance-considerations">TorchVision transforms performance considerations</a></div>
 
@@ -878,11 +869,11 @@ What fast resizing needs:
 from torchcodec.decoders import decode_image
 from torchvision.transforms import v2
 
-img = decode_image("image.jpg")             # uint8 CHW, channels-last memory
+img = decode_image("image.jpg")             # ① decode with TorchCodec
 
-transforms = v2.Compose([                   # use v2!
-    v2.Resize(size=(224, 224)),             # on uint8: SIMD fast path!
-    v2.ToDtype(torch.float32, scale=True),  # convert to float *after* resizing
+transforms = v2.Compose([                   # ② use v2
+    v2.Resize(size=(224, 224)),             # ③ resize first, on uint8
+    v2.ToDtype(torch.float32, scale=True),  #   then convert to float
     v2.Normalize(mean=..., std=...),
 ])
 out = transforms(img)
@@ -907,18 +898,17 @@ The common Image.open(...).convert("RGB") idiom (e.g. ImageFolder) adds a full c
 -->
 
 - PIL-SIMD: x86 only (no NEON SIMD), and still pays the `PIL → tensor` copy.
-- `decode_image`: JPEG (CPU **and CUDA!**), PNG, WebP, GIF, AVIF, HEIC
 
 ---
 
 ## Results are the same as PIL's!
 
-- Use `antialias=True` (the default)
-- vs PIL: mean absolute error <strong class="orange">≈ 0.01</strong> at most (out of 255), max difference <strong class="orange">1-2</strong>
+- Use <code>resize(..., <strong class="orange">antialias=True</strong>)</code> (the default)
+- vs PIL: <strong class="orange">over 99% of pixel values are identical</strong>, the others differ by <strong class="orange">1 or 2</strong> (out of 255)
 - <strong class="orange">Bitwise identical</strong> to PIL-SIMD
 - What matters for models: **consistent** interpolation mode and antialias between training and inference
 
-<span class="new">NEW</span> in `TorchVision 0.27`: **Lanczos interpolation!** Alongside bilinear and bicubic
+- <span class="new">NEW</span> in `TorchVision 0.27`: **Lanczos interpolation!** Alongside bilinear and bicubic. All SIMD.
 
 <!--
 vs Pillow 12.2, uint8, antialias=True:
@@ -1007,19 +997,12 @@ with encoder.open_file("output.mp4"):
 </div>
 </div>
 
-<!-- First slides must be high energy
-don't apologize
-Celebrate
-ABI stability should be own slide (ref Jane's talk)
 
 
-CUDA 4k why slower??
-dont rush or skip slides
+<!-- 
 
-
-lost on decoder cache
 lost on SIMD kernel "complex but we do it all for you"
 
 max pixel value not clear
 
-call to action on last slide -->
+call to action on last slide --> -->
